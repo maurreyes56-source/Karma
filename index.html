@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="es-MX">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>K&amp;M Control | App financiera</title>
+    <meta name="theme-color" content="#111827">
+    <meta name="description" content="K&M Control: tablero financiero familiar con flujo, disponible real, presupuesto, deudas y metas.">
+    <link rel="stylesheet" href="css/styles.css">
+  </head>
+  <body>
+    <div class="app-shell" data-theme="light">
+      <aside class="sidebar" aria-label="Navegacion principal">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">KM</div>
+          <div>
+            <strong>K&amp;M Control</strong>
+            <span>Control financiero familiar</span>
+          </div>
+        </div>
+
+        <nav class="nav-list" id="navList">
+          <button class="nav-item is-active" data-view="dashboard" type="button">Dashboard</button>
+          <button class="nav-item" data-view="flujo-proyectado" type="button">Flujo proyectado</button>
+          <button class="nav-item" data-view="disponible-real" type="button">Disponible real</button>
+          <button class="nav-item" data-view="registro" type="button">Registro diario</button>
+          <button class="nav-item" data-view="calendario" type="button">Calendario</button>
+          <button class="nav-item" data-view="cuentas" type="button">Cuentas</button>
+          <button class="nav-item" data-view="ingresos" type="button">Ingresos</button>
+          <button class="nav-item" data-view="presupuesto" type="button">Presupuesto</button>
+          <button class="nav-item" data-view="gastos-fijos" type="button">Gastos fijos</button>
+          <button class="nav-item" data-view="deudas" type="button">Deudas / Tarjetas</button>
+          <button class="nav-item" data-view="compras-tarjeta" type="button">Compras tarjeta</button>
+          <button class="nav-item" data-view="metas" type="button">Metas</button>
+          <button class="nav-item" data-view="reportes" type="button">Reportes</button>
+          <button class="nav-item" data-view="configuracion" type="button">Configuracion</button>
+        </nav>
+
+        <div class="sidebar-status">
+          <span class="status-dot"></span>
+          <span id="dataConfidence">Confianza pendiente</span>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">K&amp;M Control</p>
+            <h1 id="viewTitle">Dashboard</h1>
+          </div>
+          <div class="topbar-actions">
+            <label class="search-box">
+              <span aria-hidden="true">Buscar</span>
+              <input id="globalSearch" type="search" placeholder="cuenta, gasto, deuda, tarjeta">
+            </label>
+            <button id="saveBackupTop" class="primary-button" type="button">Guardar</button>
+            <label class="secondary-button file-button">Importar
+              <input id="importBackupTop" type="file" accept="application/json">
+            </label>
+            <button id="themeToggle" class="icon-button" type="button" title="Cambiar tema" aria-label="Cambiar tema">T</button>
+          </div>
+        </header>
+
+        <section class="view is-visible" id="dashboard" aria-labelledby="viewTitle">
+          <div class="setup-banner" id="setupBanner"></div>
+          <div class="metric-grid" id="metricGrid"></div>
+          <div class="smart-strip" id="smartPanels"></div>
+          <div class="content-grid">
+            <section class="panel">
+              <div class="panel-heading"><h2>Disponible por cuenta</h2><span>Solo cuentas reales con saldo pueden pagar</span></div>
+              <div class="account-grid" id="accountCards"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-heading"><h2>Riesgos proximos</h2><span>Pagos, deuda, presupuesto y flujo</span></div>
+              <div class="timeline" id="riskTimeline"></div>
+            </section>
+          </div>
+          <div class="content-grid">
+            <section class="panel">
+              <div class="panel-heading"><h2>Proximos pagos</h2><span>Agenda concreta ordenada por fecha</span></div>
+              <div class="timeline" id="upcomingPayments"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-heading"><h2>Plan para salir de deudas</h2><span>Avalancha y bola de nieve</span></div>
+              <div class="timeline" id="debtPlanPreview"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="flujo-proyectado" aria-labelledby="viewTitle">
+          <form class="entry-form projection-form" id="flowProjectionForm">
+            <div class="form-row">
+              <label>Rango
+                <select name="range">
+                  <option value="7">Proximos 7 dias</option>
+                  <option value="15">Proximos 15 dias</option>
+                  <option value="month" selected>Mes actual</option>
+                  <option value="next-month">Proximo mes</option>
+                  <option value="custom">Personalizado</option>
+                </select>
+              </label>
+              <label>Desde
+                <input name="startDate" type="date">
+              </label>
+              <label>Hasta
+                <input name="endDate" type="date">
+              </label>
+            </div>
+            <div class="form-row">
+              <label>Minimo por cuenta
+                <input name="safetyMinimum" min="0" step="50" type="number" value="300">
+              </label>
+              <label class="check-label">Simulados
+                <span><input name="includeSimulated" type="checkbox" checked> Incluir movimientos simulados</span>
+              </label>
+              <label>Accion
+                <button class="secondary-button inline-button" data-projection-refresh type="button">Actualizar flujo</button>
+              </label>
+            </div>
+          </form>
+          <div class="metric-grid" id="flowMetricGrid"></div>
+          <div class="content-grid">
+            <section class="panel">
+              <div class="panel-heading"><h2>Puntos criticos</h2><span>Cuenta, fecha y minimo futuro</span></div>
+              <div class="timeline" id="flowRiskTimeline"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-heading"><h2>Minimos por cuenta</h2><span>Disponible real por cuenta</span></div>
+              <div class="timeline" id="flowAccountMinimums"></div>
+            </section>
+          </div>
+          <div class="panel full-panel">
+            <div class="panel-heading"><h2>Linea de flujo</h2><span id="flowRowCount">0 movimientos</span></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Fecha</th><th>Cuenta</th><th>Tipo</th><th>Estatus</th><th>Entrada</th><th>Salida</th><th>Saldo antes</th><th>Saldo despues</th><th>Saldo cuenta</th><th>Consolidado</th><th>Riesgo</th></tr></thead>
+                <tbody id="flowRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="disponible-real" aria-labelledby="viewTitle">
+          <form class="entry-form projection-form" id="availableProjectionForm">
+            <div class="form-row">
+              <label>Rango
+                <select name="range">
+                  <option value="7">Proximos 7 dias</option>
+                  <option value="15">Proximos 15 dias</option>
+                  <option value="month" selected>Mes actual</option>
+                  <option value="next-month">Proximo mes</option>
+                  <option value="custom">Personalizado</option>
+                </select>
+              </label>
+              <label>Desde
+                <input name="startDate" type="date">
+              </label>
+              <label>Hasta
+                <input name="endDate" type="date">
+              </label>
+            </div>
+            <div class="form-row">
+              <label>Minimo por cuenta
+                <input name="safetyMinimum" min="0" step="50" type="number" value="300">
+              </label>
+              <label class="check-label">Simulados
+                <span><input name="includeSimulated" type="checkbox" checked> Incluir movimientos simulados</span>
+              </label>
+              <label>Accion
+                <button class="secondary-button inline-button" data-projection-refresh type="button">Actualizar disponible</button>
+              </label>
+            </div>
+          </form>
+          <div class="metric-grid" id="availableMetricGrid"></div>
+          <div class="content-grid">
+            <section class="panel">
+              <div class="panel-heading"><h2>Lectura de disponible</h2><span>No solo saldo de hoy</span></div>
+              <div class="timeline" id="availableNarrative"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-heading"><h2>Riesgo antes de ingreso</h2><span>Compromisos antes del siguiente cobro</span></div>
+              <div class="timeline" id="incomeRiskTimeline"></div>
+            </section>
+          </div>
+          <div class="panel full-panel">
+            <div class="panel-heading"><h2>Disponible por cuenta</h2><span>Saldo minimo futuro por cuenta</span></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Cuenta</th><th>Saldo actual</th><th>Ingresos futuros</th><th>Gastos/pagos</th><th>Transferencias</th><th>Disponible libre</th><th>Minimo futuro</th><th>Fecha critica</th><th>Estatus</th></tr></thead>
+                <tbody id="availableAccountRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="registro" aria-labelledby="viewTitle">
+          <form class="entry-form" id="movementForm">
+            <input name="id" type="hidden">
+            <div class="form-row">
+              <label>Fecha
+                <input name="date" required type="date">
+              </label>
+              <label>Tipo de movimiento
+                <select name="type" id="movementType" required></select>
+              </label>
+              <label>Responsable
+                <select name="owner" required></select>
+              </label>
+            </div>
+            <div class="form-row">
+              <label>Concepto
+                <input name="concept" required maxlength="90" placeholder="Ej. nomina, gasolina, pago BBVA">
+              </label>
+              <label>Categoria
+                <select name="category" id="movementCategory" required></select>
+              </label>
+              <label>Monto
+                <input name="amount" required min="0.01" step="0.01" type="number" placeholder="0.00">
+              </label>
+            </div>
+            <div class="form-row">
+              <label class="conditional-field" data-field="incomeType">Tipo de ingreso
+                <select name="incomeType"></select>
+              </label>
+              <label class="conditional-field" data-field="sourceAccountId">Cuenta origen
+                <select name="sourceAccountId"></select>
+              </label>
+              <label class="conditional-field" data-field="destinationAccountId">Cuenta destino
+                <select name="destinationAccountId"></select>
+              </label>
+              <label class="conditional-field" data-field="cardId">Tarjeta/deuda
+                <select name="cardId"></select>
+              </label>
+            </div>
+            <div class="form-row">
+              <label class="conditional-field" data-field="purchaseType">Tipo de compra
+                <select name="purchaseType"></select>
+              </label>
+              <label class="conditional-field" data-field="installments">Numero de pagos
+                <select name="installments"></select>
+              </label>
+              <label class="conditional-field" data-field="rate">Tasa %
+                <input name="rate" min="0" step="0.01" type="number" placeholder="Sin tasa registrada">
+              </label>
+              <label>Estado
+                <select name="status" required></select>
+              </label>
+            </div>
+            <div class="form-row">
+              <label>Primer pago
+                <input name="firstPaymentDate" type="date">
+              </label>
+              <label>Etiquetas
+                <select name="tag"></select>
+              </label>
+              <label>Notas
+                <input name="notes" maxlength="160" placeholder="Detalle opcional">
+              </label>
+            </div>
+            <div class="form-actions">
+              <button class="primary-button" type="submit">Guardar movimiento</button>
+              <button class="secondary-button cancel-edit" type="button" hidden>Cancelar edicion</button>
+            </div>
+            <div class="helper-alert" id="movementFundingHint" hidden></div>
+            <div class="impact-card" id="movementImpactCard" hidden>
+              <div class="panel-heading"><h2>Impacto antes de guardar</h2><span id="movementImpactScope">Proyeccion por cuenta</span></div>
+              <div class="impact-grid" id="movementImpactGrid"></div>
+              <div class="helper-alert" id="movementImpactRecommendation"></div>
+            </div>
+          </form>
+          <div class="panel full-panel">
+            <div class="panel-heading"><h2>Movimientos editables</h2><span id="movementCount">0 registros</span></div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>Fecha</th><th>Tipo</th><th>Responsable</th><th>Concepto</th><th>Cuenta</th><th>Tarjeta</th><th>Monto</th><th>Estado</th><th>Acciones</th></tr>
+                </thead>
+                <tbody id="movementRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="calendario" aria-labelledby="viewTitle">
+          <div class="content-grid">
+            <section class="panel">
+              <div class="panel-heading"><h2>Vista por dia</h2><span id="calendarMonth"></span></div>
+              <div class="calendar-grid" id="calendarGrid"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-heading"><h2>Agenda financiera</h2><span>Ingresos, pagos, cortes y vencimientos</span></div>
+              <div class="timeline" id="calendarAgenda"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="cuentas" aria-labelledby="viewTitle">
+          <form class="entry-form" id="accountForm">
+            <input name="id" type="hidden">
+            <div class="form-row">
+              <label>Cuenta
+                <input name="name" required maxlength="80" placeholder="Nombre de cuenta">
+              </label>
+              <label>Tipo
+                <select name="type" required></select>
+              </label>
+              <label>Titular
+                <select name="owner" required></select>
+              </label>
+            </div>
+            <div class="form-row">
+              <label>Saldo inicial
+                <input name="initialBalance" min="0" step="0.01" type="number" value="0">
+              </label>
+              <label>Estado
+                <select name="status"><option>Activa</option><option>Inactiva</option></select>
+              </label>
+              <label>Comentarios
+                <input name="comments" maxlength="120">
+              </label>
+            </div>
+            <div class="form-actions">
+              <button class="primary-button" type="submit">Guardar cuenta</button>
+              <button class="secondary-button cancel-edit" type="button" hidden>Cancelar edicion</button>
+            </div>
+          </form>
+          <div class="panel full-panel">
+            <div class="panel-heading"><h2>Cuentas reales</h2><span>Saldo actual recalculado</span></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Cuenta</th><th>Tipo</th><th>Titular</th><th>Saldo inicial</th><th>Saldo actual</th><th>Inicio</th><th>Acciones</th></tr></thead>
+                <tbody id="accountRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="ingresos" aria-labelledby="viewTitle">
+          <form class="entry-form" id="incomeForm">
+            <div class="form-row">
+              <label>Mes
+                <input name="month" type="month">
+              </label>
+              <label>Quincena a generar
+                <select name="payrollScope">
+                  <option value="next">Siguiente quincena pendiente</option>
+                  <option value="second">Solo segunda quincena</option>
+                  <option value="first">Solo primera quincena</option>
+                  <option value="full">Mes completo</option>
+                </select>
+              </label>
+              <label>Bono Karla
+                <input name="karlaBonus" min="0" step="0.01" type="number" placeholder="0">
+              </label>
+            </div>
+            <div class="form-row">
+              <label>Bono Mau
+                <input name="mauBonus" min="0" step="0.01" type="number" placeholder="0">
+              </label>
+              <label>Nota
+                <input value="Por defecto no genera quincenas anteriores." disabled>
+              </label>
+              <label>Accion
+                <button class="primary-button inline-button" type="submit">Generar nomina</button>
+              </label>
+            </div>
+          </form>
+          <div class="content-grid">
+            <section class="panel">
+              <div class="panel-heading"><h2>Ingresos programados</h2><span>Karla y Mau</span></div>
+              <div class="timeline" id="incomeTimeline"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-heading"><h2>Reglas de nomina</h2><span>Fechas y extras</span></div>
+              <div class="timeline" id="payrollRules"></div>
+            </section>
+          </div>
+          <div class="panel full-panel">
+            <div class="panel-heading"><h2>Ingresos editables</h2><span>Editar abre el registro diario</span></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Fecha</th><th>Persona</th><th>Concepto</th><th>Tipo</th><th>Cuenta destino</th><th>Monto</th><th>Estado</th><th>Acciones</th></tr></thead>
+                <tbody id="incomeRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="presupuesto" aria-labelledby="viewTitle">
+          <form class="entry-form" id="budgetGeneratorForm">
+            <div class="form-row">
+              <label>Semana inicial
+                <input name="weekStart" required type="date">
+              </label>
+              <label>Responsable filtro
+                <select name="ownerFilter"><option value="">Todos</option></select>
+              </label>
+              <label>Accion
+                <button class="primary-button inline-button" type="submit">Generar presupuesto semanal</button>
+              </label>
+            </div>
+          </form>
+          <form class="entry-form" id="budgetItemForm">
+            <input name="id" type="hidden">
+            <div class="form-row">
+              <label>Semana
+                <input name="weekStart" required type="date">
+              </label>
+              <label>Concepto
+                <input name="concept" required maxlength="90">
+              </label>
+              <label>Categoria
+                <select name="category" required></select>
+              </label>
+            </div>
+            <div class="form-row">
+              <label>Monto
+                <input name="amount" required min="0.01" step="0.01" type="number">
+              </label>
+              <label>Cuenta salida
+                <select name="accountId"></select>
+              </label>
+              <label>Estado
+                <select name="status" required></select>
+              </label>
+            </div>
+            <div class="form-actions">
+              <button class="primary-button" type="submit">Guardar pago semanal</button>
+              <button class="secondary-button cancel-edit" type="button" hidden>Cancelar edicion</button>
+            </div>
+          </form>
+          <div class="content-grid">
+            <section class="panel">
+              <div class="panel-heading"><h2>Apartado por cuenta</h2><span>Reserva sugerida antes de pagar</span></div>
+              <div class="timeline" id="budgetReservePlan"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-heading"><h2>Cargar al registro diario</h2><span id="budgetLoadSummary">Movimientos pendientes</span></div>
+              <div class="button-row">
+                <button class="primary-button" id="loadBudgetToRegister" type="button">Cargar presupuesto al registro diario</button>
+              </div>
+              <div class="timeline compact-timeline" id="budgetLoadPreview"></div>
+            </section>
+          </div>
+          <div class="panel full-panel">
+            <div class="panel-heading"><h2>Presupuesto semanal</h2><span id="budgetWarnings">Genera desde gastos fijos</span></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Semana</th><th>Concepto</th><th>Categoria</th><th>Cuenta</th><th>Monto</th><th>Faltante</th><th>Estado</th><th>Registro</th><th>Acciones</th></tr></thead>
+                <tbody id="budgetRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="gastos-fijos" aria-labelledby="viewTitle">
+          <form class="entry-form" id="fixedExpenseForm">
+            <input name="id" type="hidden">
+            <div class="form-row">
+              <label>Concepto
+                <input name="concept" required maxlength="90">
+              </label>
+              <label>Categoria
+                <select name="category" required></select>
+              </label>
+              <label>Monto mensual
+                <input name="monthlyAmount" required min="0.01" step="0.01" type="number">
+              </label>
+            </div>
+            <div class="form-row">
+              <label>Cuenta sugerida
+                <select name="suggestedAccountId"></select>
+              </label>
+              <label>Responsable
+                <select name="owner" required></select>
+              </label>
+              <label>Comentarios
+                <input name="comments" maxlength="120">
+              </label>
+            </div>
+            <div class="form-actions">
+              <button class="primary-button" type="submit">Guardar gasto fijo</button>
+              <button class="secondary-button cancel-edit" type="button" hidden>Cancelar edicion</button>
+            </div>
+          </form>
+          <div class="panel full-panel">
+            <div class="panel-heading"><h2>Lista fija mensual</h2><span>Se divide entre 4 semanas</span></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Concepto</th><th>Categoria</th><th>Mensual</th><th>Semanal</th><th>Cuenta</th><th>Responsable</th><th>Acciones</th></tr></thead>
+                <tbody id="fixedExpenseRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="deudas" aria-labelledby="viewTitle">
+          <form class="entry-form" id="cardForm">
+            <input name="id" type="hidden">
+            <div class="form-row">
+              <label>Tarjeta/deuda
+                <input name="name" required maxlength="80">
+              </label>
+              <label>Tipo
+                <select name="kind" required></select>
+              </label>
+              <label>Titular
+                <select name="owner" required></select>
+              </label>
+            </div>
+            <div class="form-row">
+              <label>Limite
+                <input name="limit" min="0" step="0.01" type="number">
+              </label>
+              <label>Saldo utilizado
+                <input name="used" min="0" step="0.01" type="number">
+              </label>
+              <label>Tasa %
+                <input name="rate" min="0" step="0.01" type="number">
+              </label>
+            </div>
+            <div class="form-row">
+              <label>Fecha corte
+                <input name="cutoffDate" type="date">
+              </label>
+              <label>Fecha limite
+                <input name="dueDate" type="date">
+              </label>
+              <label>Pago previsto
+                <input name="plannedPayment" min="0" step="0.01" type="number">
+              </label>
+            </div>
+            <div class="form-actions">
+              <button class="primary-button" type="submit">Guardar tarjeta/deuda</button>
+              <button class="secondary-button cancel-edit" type="button" hidden>Cancelar edicion</button>
+            </div>
+          </form>
+          <div class="panel full-panel">
+            <div class="panel-heading"><h2>Tarjetas y deudas</h2><span>Limite, saldo, corte y vencimiento</span></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Nombre</th><th>Titular</th><th>Limite</th><th>Usado</th><th>Disponible</th><th>Corte</th><th>Vence</th><th>Pago previsto</th><th>Acciones</th></tr></thead>
+                <tbody id="cardRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="compras-tarjeta" aria-labelledby="viewTitle">
+          <div class="panel">
+            <div class="panel-heading"><h2>Compras diferidas pendientes</h2><span>Pagos futuros por tarjeta</span></div>
+            <div class="timeline" id="cardPurchaseTimeline"></div>
+          </div>
+        </section>
+
+        <section class="view" id="metas" aria-labelledby="viewTitle">
+          <form class="entry-form" id="goalForm">
+            <input name="id" type="hidden">
+            <div class="form-row">
+              <label>Meta
+                <input name="name" required maxlength="80" placeholder="Fondo, viaje, liquidar deuda">
+              </label>
+              <label>Monto objetivo
+                <input name="targetAmount" required min="0.01" step="0.01" type="number">
+              </label>
+              <label>Fecha objetivo
+                <input name="targetDate" required type="date">
+              </label>
+            </div>
+            <div class="form-row">
+              <label>Ahorro mensual
+                <input name="monthlySaving" min="0" step="0.01" type="number">
+              </label>
+              <label>Responsable
+                <select name="owner" required></select>
+              </label>
+              <label>Estado
+                <select name="status" required></select>
+              </label>
+            </div>
+            <div class="form-actions">
+              <button class="primary-button" type="submit">Guardar meta</button>
+              <button class="secondary-button cancel-edit" type="button" hidden>Cancelar edicion</button>
+            </div>
+          </form>
+          <div class="panel full-panel">
+            <div class="panel-heading"><h2>Metas</h2><span>Objetivos financieros</span></div>
+            <div class="table-wrap"><table><thead><tr><th>Meta</th><th>Objetivo</th><th>Fecha</th><th>Avance</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="goalRows"></tbody></table></div>
+          </div>
+        </section>
+
+        <section class="view" id="reportes" aria-labelledby="viewTitle">
+          <div class="metric-grid" id="reportCards"></div>
+          <div class="content-grid">
+            <section class="panel">
+              <div class="panel-heading"><h2>Lectura ejecutiva</h2><span>Sin abrir tablas</span></div>
+              <div class="timeline" id="reportNarrative"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-heading"><h2>Segmentos</h2><span>Cuenta, responsable, categoria y estado</span></div>
+              <div class="timeline" id="segmentReport"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="configuracion" aria-labelledby="viewTitle">
+          <div class="panel full-panel">
+            <div class="panel-heading"><h2>Configuracion y respaldo</h2><span>JSON portable para WhatsApp o Drive</span></div>
+            <div class="config-grid">
+              <div class="stack-item"><strong>Guardar</strong><span>Descarga un respaldo JSON con version, folio y numero de movimientos.</span></div>
+              <div class="stack-item"><strong>Importar</strong><span>Valida estructura, version, IDs, fechas y montos antes de reemplazar datos.</span></div>
+              <div class="stack-item"><strong>CSV</strong><span>Exporta movimientos para revisar en Excel.</span></div>
+              <div class="stack-item"><strong>Recalcular todo</strong><span>Reconstruye saldos, deudas, presupuesto, alertas y dashboard desde los datos.</span></div>
+            </div>
+            <div class="button-row">
+              <button class="secondary-button" id="exportBackup" type="button">Exportar respaldo JSON</button>
+              <label class="secondary-button file-button">Importar respaldo JSON
+                <input id="importBackup" type="file" accept="application/json">
+              </label>
+              <button class="secondary-button" id="exportCsv" type="button">Exportar movimientos CSV</button>
+              <button class="secondary-button" id="recalculateAll" type="button">Recalcular todo</button>
+              <button class="danger-button" id="resetDemo" type="button">Reiniciar / limpiar datos</button>
+            </div>
+          </div>
+          <div class="content-grid">
+            <section class="panel">
+              <div class="panel-heading"><h2>Como usar</h2><span>Flujo recomendado</span></div>
+              <div class="timeline" id="howToUse"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-heading"><h2>Bitacora</h2><span>Cambios importantes</span></div>
+              <div class="timeline" id="auditLog"></div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/formulas.js"></script>
+    <script src="js/engine.js"></script>
+    <script src="js/validators.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>
